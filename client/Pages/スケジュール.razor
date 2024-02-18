@@ -1,0 +1,103 @@
+﻿@page "/"
+@page "/スケジュール"
+@layout MainLayout
+@inherits TryBlazor.Pages.スケジュールComponent
+
+@using Radzen
+@using Radzen.Blazor
+@using TryBlazor.Client.Components;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+<PageTitle>スケジュール</PageTitle>
+<RadzenContent Container="main">
+  <ChildContent>
+    <RadzenHeading Size="H1" Text="スケジュール">
+    </RadzenHeading>
+        <RadzenScheduler @ref=@scheduler SlotRender=@OnSlotRender style="height: 768px;" TItem="Appointment" Data=@appointments StartProperty="Start" EndProperty="End"
+                         TextProperty="Text" SelectedIndex="2"
+                         SlotSelect=@OnSlotSelect AppointmentSelect=@OnAppointmentSelect AppointmentRender=@OnAppointmentRender TodayText="今日">
+            <RadzenDayView Text="日"/>
+            <RadzenWeekView Text="週"/>
+            <RadzenMonthView Text="月"/>
+            <RadzenYearView Text="年"/>
+        </RadzenScheduler>
+  </ChildContent>
+</RadzenContent>
+
+@code {
+    RadzenScheduler<Appointment> scheduler;
+    Dictionary<DateTime, string> events = new Dictionary<DateTime, string>();
+
+    IList<Appointment> appointments = new List<Appointment>
+    {
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var storageAppointments = await localStorage.GetItemAsync<List<Appointment>>("appointments");
+        if (storageAppointments != null)
+        {
+            appointments = storageAppointments;
+        }
+    }
+
+    void OnSlotRender(SchedulerSlotRenderEventArgs args)
+    {
+        // Highlight today in month view
+        if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+        {
+            args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+        }
+
+        // Highlight working hours (9-18)
+        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 8 && args.Start.Hour < 19)
+        {
+            args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+        }
+    }
+
+    async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
+    {
+
+        Appointment data = await DialogService.OpenAsync<AddAppointmentPage>("Add Appointment",
+            new Dictionary<string, object> { { "Start", args.Start }, { "End", args.End } });
+
+        if (data != null)
+        {
+            long idMax = 0;
+            if (appointments.Count > 0)
+            {
+                idMax = appointments.Select(x => x.ID).Max();
+            }
+            data.ID = idMax + 1;
+            appointments.Add(data);
+            await localStorage.SetItemAsync("appointments", appointments);
+
+            // Either call the Reload method or reassign the Data property of the Scheduler
+            await scheduler.Reload();
+        }
+    }
+
+    async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<Appointment> args)
+    {
+
+        var result =  await DialogService.OpenAsync<EditAppointmentPage>("Edit Appointment", new Dictionary<string, object> { { "Appointment", args.Data } });
+        if (result==null)
+        {
+            appointments.Remove(args.Data);
+        }
+        await localStorage.SetItemAsync("appointments", appointments);
+
+        await scheduler.Reload();
+    }
+
+    void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<Appointment> args)
+    {
+        // Never call StateHasChanged in AppointmentRender - would lead to infinite loop
+
+        if (args.Data.Text.IndexOf("誕生日") >=0 )
+        {
+            args.Attributes["style"] = "background: red";
+        }
+    }
+}

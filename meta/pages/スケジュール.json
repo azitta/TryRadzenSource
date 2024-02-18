@@ -1,0 +1,23 @@
+{
+  "access": "Everybody",
+  "components": [
+    {
+      "components": [
+        {
+          "name": "pageTitle",
+          "size": "H1",
+          "text": "スケジュール",
+          "type": "heading"
+        },
+        {
+          "name": "scheduler0",
+          "type": "scheduler"
+        }
+      ],
+      "container": "main",
+      "type": "content"
+    }
+  ],
+  "layout": "Main",
+  "name": "スケジュール"
+}

@@ -1,0 +1,31 @@
+{
+  "access": "Everybody",
+  "components": [
+    {
+      "components": [
+        {
+          "name": "pageTitle",
+          "size": "H1",
+          "text": "スケジュールリスト",
+          "type": "heading"
+        },
+        {
+          "allowFiltering": true,
+          "allowSorting": true,
+          "columns": [],
+          "data": "",
+          "name": "datagrid0",
+          "pagerAlwaysVisible": false,
+          "style": {
+            "height": "317.6000061035156px"
+          },
+          "type": "datagrid"
+        }
+      ],
+      "container": "main",
+      "type": "content"
+    }
+  ],
+  "layout": "Main",
+  "name": "スケジュールリスト"
+}

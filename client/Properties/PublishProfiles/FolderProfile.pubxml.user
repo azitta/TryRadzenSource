@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <_PublishTargetUrl>C:\Users\a_zit\source\repos\TryRadzen\client\bin\Release\net6.0\browser-wasm\publish\</_PublishTargetUrl>
+    <History>True|2023-03-21T12:49:16.4612526Z;True|2023-03-21T21:02:47.8265538+09:00;True|2023-03-21T20:45:12.0184224+09:00;True|2023-03-21T20:37:18.3850350+09:00;True|2023-03-21T18:18:22.4962038+09:00;True|2023-03-21T15:23:44.1213056+09:00;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+</Project>

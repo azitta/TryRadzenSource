@@ -1,0 +1,26 @@
+{
+  "dataSources": [],
+  "generator": "@radzen/blazor-server",
+  "https": false,
+  "layouts": [
+    "Login",
+    "Main"
+  ],
+  "logo": "",
+  "name": "TryBlazor",
+  "navigation": [
+    "スケジュール",
+    "スケジュールリスト"
+  ],
+  "pages": [
+    "Login",
+    "スケジュール",
+    "スケジュールリスト"
+  ],
+  "serverLang": "cs",
+  "serverProject": true,
+  "serverVersion": "6",
+  "startPage": "スケジュール",
+  "theme": "dark",
+  "wasm": true
+}

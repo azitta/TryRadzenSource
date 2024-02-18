@@ -1,0 +1,208 @@
+﻿@page "/スケジュールリスト"
+@layout MainLayout
+@inherits TryBlazor.Pages.スケジュールリストComponent
+
+@using Radzen
+@using Radzen.Blazor
+@using TryBlazor.Client.Components;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+<PageTitle>スケジュールリスト</PageTitle>
+<RadzenContent Container="main">
+    <ChildContent>
+        <RadzenHeading Size="H1" Text="スケジュールリスト">
+        </RadzenHeading>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px" class="mt-2 mb-4">
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="Add New Appointment" Click="@InsertRow" Disabled="@(editMode == DataGridEditMode.Single && appointmentsToInsert.Count() > 0)" />
+            <div style="white-space:nowrap; margin-left: 20px ">Edit Mode:</div>
+            <RadzenSelectBar @bind-Value="@editMode" TextProperty="Text" ValueProperty="Value" style="margin-right: 16px"
+                             Data="@(Enum.GetValues(typeof(DataGridEditMode)).Cast<DataGridEditMode>().Select(t => new { Text = $"{t}", Value = t }))" Size="ButtonSize.Small"
+                             Disabled="@(editMode == DataGridEditMode.Multiple && appointmentsToInsert.Count() > 1)" />
+        </RadzenStack>
+
+        <RadzenDataGrid @ref="appointmentsGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="@editMode"
+                        Data="@appointments" TItem="Appointment" KeyProperty="ID" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+            <Columns>
+                <RadzenDataGridColumn TItem="Appointment" Property="ID" Title="ID" Width="120px" Frozen="true" />
+                <RadzenDataGridColumn TItem="Appointment" Property="Start" Title="開始" Width="200px">
+                    <Template Context="appointment">
+                        @String.Format("{0:d}", appointment.Start)
+                    </Template>
+                    <EditTemplate Context="appointment">
+                        <RadzenDatePicker @bind-Value="appointment.Start" Style="width:100%" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Appointment" Property="End" Title="終了" Width="200px">
+                    <Template Context="appointment">
+                        @String.Format("{0:d}", appointment.End)
+                    </Template>
+                    <EditTemplate Context="appointment">
+                        <RadzenDatePicker @bind-Value="appointment.End" Style="width:100%" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Appointment" Property="Text" Title="内容">
+                    <EditTemplate Context="appointment">
+                        <RadzenTextBox @bind-Value="appointment.Text" Style="width:200px; display: block" Name="ShipName" />
+                        <RadzenRequiredValidator Text="内容を入力してください。" Component="Text" Popup="true" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Appointment" Context="appointment" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                    <Template Context="appointment">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(appointment))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(appointment))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="appointment">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(appointment))">
+                        </RadzenButton>
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(appointment))">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(appointment))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </ChildContent>
+</RadzenContent>
+@code {
+    RadzenDataGrid<Appointment> appointmentsGrid;
+
+    LogicalFilterOperator logicalFilterOperator = LogicalFilterOperator.And;
+    FilterCaseSensitivity filterCaseSensitivity = FilterCaseSensitivity.CaseInsensitive;
+
+    DataGridEditMode editMode = DataGridEditMode.Single;
+
+    List<Appointment> appointmentsToInsert = new List<Appointment>();
+    List<Appointment> appointmentsToUpdate = new List<Appointment>();
+    IEnumerable<Appointment> appointments;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        var storageAppointments = await localStorage.GetItemAsync<List<Appointment>>("appointments");
+        if (storageAppointments != null)
+        {
+            appointments = storageAppointments.AsEnumerable();
+        }
+    }
+
+    void Reset()
+    {
+        appointmentsToInsert.Clear();
+        appointmentsToUpdate.Clear();
+    }
+
+    void Reset(Appointment appointment)
+    {
+        appointmentsToInsert.Remove(appointment);
+        appointmentsToUpdate.Remove(appointment);
+    }
+
+    async Task EditRow(Appointment appointment)
+    {
+        if (editMode == DataGridEditMode.Single && appointmentsToInsert.Count() > 0)
+        {
+            Reset();
+        }
+
+        appointmentsToUpdate.Add(appointment);
+        await appointmentsGrid.EditRow(appointment);
+    }
+
+    void OnUpdateRow(Appointment appointment)
+    {
+        Reset(appointment);
+
+        localStorage.SetItemAsync("appointments", appointments.ToList());
+    }
+
+    async Task SaveRow(Appointment appointment)
+    {
+        // await appointmentsGrid.UpdateRow(appointment);
+        appointmentsGrid.CancelEditRow(appointment);
+        if (appointmentsToInsert.Contains(appointment))
+        {
+            OnCreateRow(appointment);
+        }
+        else if (appointmentsToUpdate.Contains(appointment))
+        {
+            OnUpdateRow(appointment);
+        }
+    }
+
+    async Task CancelEdit(Appointment appointment)
+    {
+        Reset(appointment);
+
+        if (appointment.ID != 0)
+        {
+            var storageAppointments = await localStorage.GetItemAsync<List<Appointment>>("appointments");
+            if (storageAppointments != null)
+            {
+                Appointment bkAppointment = storageAppointments.Where(x => x.ID == appointment.ID).FirstOrDefault();
+                appointment.Start = bkAppointment.Start;
+                appointment.End = bkAppointment.End;
+                appointment.Text = bkAppointment.Text;
+            }
+        }
+        appointmentsGrid.CancelEditRow(appointment);
+
+        // var appointmentEntry = dbContext.Entry(appointment);
+        // if (appointmentEntry.State == EntityState.Modified)
+        // {
+        //     appointmentEntry.CurrentValues.SetValues(appointmentEntry.OriginalValues);
+        //     appointmentEntry.State = EntityState.Unchanged;
+        // }
+    }
+
+    async Task DeleteRow(Appointment appointment)
+    {
+        Reset(appointment);
+
+        if (appointments.Contains(appointment))
+        {
+            var list = appointments.ToList();
+            list.Remove(appointment);
+            appointments = list.AsEnumerable();
+            await localStorage.SetItemAsync("appointments", appointments.ToList());
+            await appointmentsGrid.Reload();
+        }
+        else
+        {
+            appointmentsGrid.CancelEditRow(appointment);
+            await appointmentsGrid.Reload();
+        }
+    }
+
+    async Task InsertRow()
+    {
+        if (editMode == DataGridEditMode.Single)
+        {
+            Reset();
+        }
+
+        var appointment = new Appointment();
+        appointmentsToInsert.Add(appointment);
+        await appointmentsGrid.InsertRow(appointment);
+    }
+
+    void OnCreateRow(Appointment appointment)
+    {
+        long idMax = 0;
+        if (appointments.Count() > 0)
+        {
+            idMax = appointments.Select(x => x.ID).Max();
+        }
+        appointment.ID = idMax + 1;
+        var list = appointments.ToList();
+        list.Add(appointment);
+        appointments = list.AsEnumerable();
+        localStorage.SetItemAsync("appointments", appointments.ToList());
+
+        appointmentsToInsert.Remove(appointment);
+        appointmentsGrid.Reload();
+        appointmentsGrid.CancelEditRow(appointment);
+    }
+}
