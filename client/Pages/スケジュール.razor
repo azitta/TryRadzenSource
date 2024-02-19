@@ -14,10 +14,10 @@
     <RadzenHeading Size="H1" Text="スケジュール">
     </RadzenHeading>
         <RadzenScheduler @ref=@scheduler SlotRender=@OnSlotRender style="height: 768px;" TItem="Appointment" Data=@appointments StartProperty="Start" EndProperty="End"
-                         TextProperty="Text" SelectedIndex="2"
+                         TextProperty="ContentText" SelectedIndex="2"
                          SlotSelect=@OnSlotSelect AppointmentSelect=@OnAppointmentSelect AppointmentRender=@OnAppointmentRender TodayText="今日">
-            <RadzenDayView Text="日"/>
-            <RadzenWeekView Text="週"/>
+            <RadzenDayView Text="日" StartTime="TimeSpan.FromHours(0)" EndTime="TimeSpan.FromHours(24)" />
+            <RadzenWeekView Text="週" StartTime="TimeSpan.FromHours(0)" EndTime="TimeSpan.FromHours(24)" />
             <RadzenMonthView Text="月"/>
             <RadzenYearView Text="年"/>
         </RadzenScheduler>
@@ -44,13 +44,13 @@
     void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
         // Highlight today in month view
-        if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+        if (args.View.Text == "月" && args.Start.Date == DateTime.Today)
         {
             args.Attributes["style"] = "background: rgba(255,220,40,.2);";
         }
 
         // Highlight working hours (9-18)
-        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 8 && args.Start.Hour < 19)
+        if ((args.View.Text == "週" || args.View.Text == "日") && args.Start.Hour > 8 && args.Start.Hour < 19)
         {
             args.Attributes["style"] = "background: rgba(255,220,40,.2);";
         }
@@ -59,17 +59,11 @@
     async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
     {
 
-        Appointment data = await DialogService.OpenAsync<AddAppointmentPage>("Add Appointment",
+        Appointment data = await DialogService.OpenAsync<AddAppointmentPage>("予定追加",
             new Dictionary<string, object> { { "Start", args.Start }, { "End", args.End } });
 
         if (data != null)
         {
-            long idMax = 0;
-            if (appointments.Count > 0)
-            {
-                idMax = appointments.Select(x => x.ID).Max();
-            }
-            data.ID = idMax + 1;
             appointments.Add(data);
             await localStorage.SetItemAsync("appointments", appointments);
 
@@ -81,7 +75,7 @@
     async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<Appointment> args)
     {
 
-        var result =  await DialogService.OpenAsync<EditAppointmentPage>("Edit Appointment", new Dictionary<string, object> { { "Appointment", args.Data } });
+        var result =  await DialogService.OpenAsync<EditAppointmentPage>("予定編集", new Dictionary<string, object> { { "Appointment", args.Data } });
         if (result==null)
         {
             appointments.Remove(args.Data);
@@ -95,7 +89,7 @@
     {
         // Never call StateHasChanged in AppointmentRender - would lead to infinite loop
 
-        if (args.Data.Text.IndexOf("誕生日") >=0 )
+        if (args.Data.ContentText.IndexOf("誕生日") >= 0)
         {
             args.Attributes["style"] = "background: red";
         }

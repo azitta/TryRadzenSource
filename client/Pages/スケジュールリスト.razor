@@ -13,7 +13,7 @@
         <RadzenHeading Size="H1" Text="スケジュールリスト">
         </RadzenHeading>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px" class="mt-2 mb-4">
-            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="Add New Appointment" Click="@InsertRow" Disabled="@(editMode == DataGridEditMode.Single && appointmentsToInsert.Count() > 0)" />
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="予定を追加" Click="@InsertRow" Disabled="@(editMode == DataGridEditMode.Single && appointmentsToInsert.Count() > 0)" />
             <div style="white-space:nowrap; margin-left: 20px ">Edit Mode:</div>
             <RadzenSelectBar @bind-Value="@editMode" TextProperty="Text" ValueProperty="Value" style="margin-right: 16px"
                              Data="@(Enum.GetValues(typeof(DataGridEditMode)).Cast<DataGridEditMode>().Select(t => new { Text = $"{t}", Value = t }))" Size="ButtonSize.Small"
@@ -29,7 +29,8 @@
                         @String.Format("{0:d}", appointment.Start)
                     </Template>
                     <EditTemplate Context="appointment">
-                        <RadzenDatePicker @bind-Value="appointment.Start" Style="width:100%" />
+                        <RadzenDatePicker @bind-Value="appointment.Start" Style="width:200px; display: block" Name="Start" />
+                        <RadzenRequiredValidator Text="開始は必須です" Component="Start" Popup="true" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="Appointment" Property="End" Title="終了" Width="200px">
@@ -37,13 +38,15 @@
                         @String.Format("{0:d}", appointment.End)
                     </Template>
                     <EditTemplate Context="appointment">
-                        <RadzenDatePicker @bind-Value="appointment.End" Style="width:100%" />
+                        <RadzenDatePicker @bind-Value="appointment.End" Style="width:200px; display: block" Name="End" />
+                        <RadzenRequiredValidator Text="終了は必須です" Component="End" Popup="true" />
+                        <RadzenCustomValidator Component="End" Validator="@(() => CheckFromTo(appointment.Start,appointment.End))" Text="終了は開始より後ろ日時にしてください" Popup="true" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Appointment" Property="Text" Title="内容">
+                <RadzenDataGridColumn TItem="Appointment" Property="ContentText" Title="内容">
                     <EditTemplate Context="appointment">
-                        <RadzenTextBox @bind-Value="appointment.Text" Style="width:200px; display: block" Name="ShipName" />
-                        <RadzenRequiredValidator Text="内容を入力してください。" Component="Text" Popup="true" />
+                        <RadzenTextBox @bind-Value="appointment.ContentText" Style="width:200px; display: block" Name="ContentText" />
+                        <RadzenRequiredValidator Text="内容は必須です" Component="ContentText" Popup="true" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="Appointment" Context="appointment" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
@@ -86,6 +89,10 @@
         {
             appointments = storageAppointments.AsEnumerable();
         }
+        else
+        {
+            appointments = new List<Appointment>{}.AsEnumerable();
+        }
     }
 
     void Reset()
@@ -120,23 +127,14 @@
 
     async Task SaveRow(Appointment appointment)
     {
-        // await appointmentsGrid.UpdateRow(appointment);
-        appointmentsGrid.CancelEditRow(appointment);
-        if (appointmentsToInsert.Contains(appointment))
-        {
-            OnCreateRow(appointment);
-        }
-        else if (appointmentsToUpdate.Contains(appointment))
-        {
-            OnUpdateRow(appointment);
-        }
+        await appointmentsGrid.UpdateRow(appointment);
     }
 
     async Task CancelEdit(Appointment appointment)
     {
         Reset(appointment);
 
-        if (appointment.ID != 0)
+        if (appointmentsToUpdate.Contains(appointment))
         {
             var storageAppointments = await localStorage.GetItemAsync<List<Appointment>>("appointments");
             if (storageAppointments != null)
@@ -144,7 +142,7 @@
                 Appointment bkAppointment = storageAppointments.Where(x => x.ID == appointment.ID).FirstOrDefault();
                 appointment.Start = bkAppointment.Start;
                 appointment.End = bkAppointment.End;
-                appointment.Text = bkAppointment.Text;
+                appointment.ContentText = bkAppointment.ContentText;
             }
         }
         appointmentsGrid.CancelEditRow(appointment);
@@ -190,19 +188,20 @@
 
     void OnCreateRow(Appointment appointment)
     {
-        long idMax = 0;
-        if (appointments.Count() > 0)
-        {
-            idMax = appointments.Select(x => x.ID).Max();
-        }
-        appointment.ID = idMax + 1;
         var list = appointments.ToList();
         list.Add(appointment);
         appointments = list.AsEnumerable();
         localStorage.SetItemAsync("appointments", appointments.ToList());
 
         appointmentsToInsert.Remove(appointment);
-        appointmentsGrid.Reload();
-        appointmentsGrid.CancelEditRow(appointment);
+    }
+
+    bool CheckFromTo(DateTime? from, DateTime? to)
+    {
+        if (to == null || from == null)
+        {
+            return true;
+        }
+        return from < to;
     }
 }

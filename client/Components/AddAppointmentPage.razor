@@ -6,8 +6,8 @@
             <RadzenLabel Text="内容" />
         </div>
         <div class="col">
-            <RadzenTextBox @bind-Value="@model.Text" Name="Text" />
-            <RadzenRequiredValidator Text="内容は必須です" Component="Text" />
+            <RadzenTextBox @bind-Value="@model.ContentText" Name="ContentText" />
+            <RadzenRequiredValidator Text="内容は必須です" Component="ContentText" />
         </div>
     </div>
     <div class="row" style="margin-bottom: 16px">
@@ -26,6 +26,7 @@
         <div class="col">
             <RadzenDatePicker Name="End" @bind-Value="@model.End" ShowTime="true" />
             <RadzenRequiredValidator Component="End" Text="終了は必須です" />
+            <RadzenCustomValidator Component="End" Validator="@(() => CheckFromTo(model.Start,model.End))" Text="終了は開始より後ろ日時にしてください" />
         </div>
     </div>
     <div class="row">
@@ -37,10 +38,10 @@
 </RadzenTemplateForm>
 @code {
     [Parameter]
-    public DateTime Start { get; set; }
+    public DateTime? Start { get; set; }
 
     [Parameter]
-    public DateTime End { get; set; }
+    public DateTime? End { get; set; }
 
     Appointment model = new Appointment();
 
@@ -53,5 +54,14 @@
     void OnSubmit(Appointment model)
     {
         DialogService.Close(model);
+    }
+
+    bool CheckFromTo(DateTime? from, DateTime? to)
+    {
+        if (to == null || from == null)
+        {
+            return true;
+        }
+        return from < to;
     }
 }

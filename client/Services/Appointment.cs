@@ -1,14 +1,22 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TryBlazor
 {
-    public class Appointment
+    [Table("Appointments")]
+    public partial class Appointment
     {
-        public long ID { get; set; }
-        public string Text { get; set; }
-        public DateTime Start { get; set; }
-        public DateTime End { get; set; }
+        [Key]
+        public Guid ID { get; set; }
+        [Required]
+        public string ContentText { get; set; } = string.Empty;
+        public DateTime? Start { get; set; }
+        public DateTime? End { get; set; }
 
+        public Appointment()
+        {
+            ID = Guid.NewGuid();
+        }
     }
 }
