@@ -76,13 +76,15 @@
     {
 
         var result =  await DialogService.OpenAsync<EditAppointmentPage>("予定編集", new Dictionary<string, object> { { "Appointment", args.Data } });
-        if (result==null)
+        if (result != null)
         {
-            appointments.Remove(args.Data);
+            if (result.DeleteFLG)
+            {
+                appointments.Remove(args.Data);
+            }
+            await localStorage.SetItemAsync("appointments", appointments);
+            await scheduler.Reload();
         }
-        await localStorage.SetItemAsync("appointments", appointments);
-
-        await scheduler.Reload();
     }
 
     void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<Appointment> args)

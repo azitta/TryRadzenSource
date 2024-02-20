@@ -57,7 +57,8 @@
 
     void OnDelete()
     {
-        DialogService.Close(null);
+        model.DeleteFLG = true;
+        DialogService.Close(model);
     }
 
     bool CheckFromTo(DateTime? from, DateTime? to)

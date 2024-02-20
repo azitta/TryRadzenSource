@@ -13,7 +13,7 @@ namespace TryBlazor
         public string ContentText { get; set; } = string.Empty;
         public DateTime? Start { get; set; }
         public DateTime? End { get; set; }
-
+        public bool DeleteFLG { get; set; } = false;
         public Appointment()
         {
             ID = Guid.NewGuid();
