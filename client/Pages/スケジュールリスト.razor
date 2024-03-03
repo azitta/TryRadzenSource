@@ -21,15 +21,14 @@
         </RadzenStack>
 
         <RadzenDataGrid @ref="appointmentsGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="@editMode"
-                        Data="@appointments" TItem="Appointment" KeyProperty="ID" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+                        Data="@appointments" TItem="Appointment" KeyProperty="ID" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset">
             <Columns>
-                <RadzenDataGridColumn TItem="Appointment" Property="ID" Title="ID" Width="120px" Frozen="true" />
                 <RadzenDataGridColumn TItem="Appointment" Property="Start" Title="開始" Width="200px">
                     <Template Context="appointment">
                         @String.Format("{0:d}", appointment.Start)
                     </Template>
                     <EditTemplate Context="appointment">
-                        <RadzenDatePicker @bind-Value="appointment.Start" Style="width:200px; display: block" Name="Start" />
+                        <RadzenDatePicker @bind-Value="appointment.Start" Style="width:100%; display: block" Name="Start" />
                         <RadzenRequiredValidator Text="開始は必須です" Component="Start" Popup="true" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
@@ -38,18 +37,18 @@
                         @String.Format("{0:d}", appointment.End)
                     </Template>
                     <EditTemplate Context="appointment">
-                        <RadzenDatePicker @bind-Value="appointment.End" Style="width:200px; display: block" Name="End" />
+                        <RadzenDatePicker @bind-Value="appointment.End" Style="width:100%; display: block" Name="End" />
                         <RadzenRequiredValidator Text="終了は必須です" Component="End" Popup="true" />
                         <RadzenCustomValidator Component="End" Validator="@(() => CheckFromTo(appointment.Start,appointment.End))" Text="終了は開始より後ろ日時にしてください" Popup="true" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Appointment" Property="ContentText" Title="内容">
+                <RadzenDataGridColumn TItem="Appointment" Property="ContentText" Title="内容" MinWidth="300px">
                     <EditTemplate Context="appointment">
-                        <RadzenTextBox @bind-Value="appointment.ContentText" Style="width:200px; display: block" Name="ContentText" />
+                        <RadzenTextBox @bind-Value="appointment.ContentText" Style="width:100%; display: block" Name="ContentText" />
                         <RadzenRequiredValidator Text="内容は必須です" Component="ContentText" Popup="true" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Appointment" Context="appointment" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                <RadzenDataGridColumn TItem="Appointment" Context="appointment" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="140px">
                     <Template Context="appointment">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(appointment))" @onclick:stopPropagation="true">
                         </RadzenButton>
